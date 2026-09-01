@@ -1,0 +1,12 @@
+id = "purescript-alexandrite"
+name = "PureScript Alexandrite"
+version = "0.0.1"
+schema_version = 1
+description = "Alexandrite language server for PureScript."
+authors = ["nathan wilson"]
+
+# Attaches to the PureScript language contributed by the `purescript` extension,
+# which must stay installed.
+[language_servers.alexandrite]
+name = "Alexandrite"
+language = "PureScript"
