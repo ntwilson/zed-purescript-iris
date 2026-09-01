@@ -1,0 +1,1 @@
+# zed-purescript-alexandrite
