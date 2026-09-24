@@ -29,9 +29,11 @@ The server is named `alexandrite`. Enable it for PureScript in `settings.json` â
 {
   "languages": {
     "PureScript": {
-      // Both servers, Alexandrite first. Use "!purescript-language-server" to run
-      // Alexandrite alone.
-      "language_servers": ["alexandrite", "purescript-language-server"]
+      // LIST purescript-language-server FIRST. Zed routes a request to the first server
+      // that handles it and does not fall back, so putting pre-1.0 Alexandrite ahead of
+      // it means one wedged server takes every PureScript feature down instead of
+      // degrading. Use "!purescript-language-server" to run Alexandrite alone.
+      "language_servers": ["purescript-language-server", "alexandrite"]
     }
   }
 }
@@ -46,19 +48,36 @@ The binary is resolved from `PATH` (the installer's default location,
     "alexandrite": {
       "binary": {
         "path": "C:/path/to/purescript-alexandrite.exe",
-        "arguments": ["--stdio"]
+        "arguments": ["--diagnostics-on-open", "false"]
       }
     }
   }
 }
 ```
 
-`arguments` defaults to `["--stdio"]`, matching what the VS Code extension spawns. Alexandrite
-discovers sources from `spago.lock` by default; pass `--source-command <cmd>` through `arguments` to
-use something else (which also disables the `spago.lock` integration).
+`--stdio` is appended automatically unless `arguments` already contains it, so extra flags can be
+passed without repeating it. Alexandrite discovers sources from `spago.lock` by default; passing
+`--source-command <cmd>` also disables that integration.
 
-## Not wired up
+Flags worth knowing about (`purescript-alexandrite --help` for the full list, v0.0.18 here):
 
-Alexandrite's `sourceCommand` setting has no equivalent here beyond passing `--source-command`
-yourself. Its VS Code extension exposes only `serverPath` and `sourceCommand`, so nothing else is
-missing.
+| flag | default | notes |
+| --- | --- | --- |
+| `--diagnostics-on-open <bool>` | `true` | Zed restores every `.purs` tab from the last session at once, so this is one check per restored tab before anything else is served. |
+| `--diagnostics-on-save <bool>` | `true` | |
+| `--diagnostics-on-change` | off | |
+| `--lsp-log <level>` | `info` | |
+| `--query-log <level>` / `--checking-log <level>` | `off` | |
+
+`lsp.alexandrite.settings` and `lsp.alexandrite.initialization_options` are forwarded to the server
+as workspace configuration and initialization options.
+
+## Known upstream problems
+
+Both are Alexandrite's, not fixable here:
+
+- **Orphaned processes.** It doesn't exit on LSP `shutdown`/`exit`, so one process per Zed window
+  accumulates indefinitely. Check with `Get-Process purescript-alexandrite`.
+- **One shared log file.** `purescript-alexandrite --log-file` prints the path it uses, which is
+  `%TEMP%\purescript-alexandrite.log` for every instance. The first process holds it and the rest log
+  nowhere, so the log is usually stale. There's no flag to redirect it.
