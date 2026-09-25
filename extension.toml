@@ -1,12 +1,12 @@
-id = "purescript-alexandrite"
-name = "PureScript Alexandrite"
+id = "purescript-iris"
+name = "PureScript Iris"
 version = "0.0.1"
 schema_version = 1
-description = "Alexandrite language server for PureScript."
+description = "Iris language server for PureScript."
 authors = ["nathan wilson"]
 
 # Attaches to the PureScript language contributed by the `purescript` extension,
 # which must stay installed.
-[language_servers.alexandrite]
-name = "Alexandrite"
+[language_servers.iris]
+name = "Iris"
 language = "PureScript"

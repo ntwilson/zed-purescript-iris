@@ -1,12 +1,12 @@
 [package]
-name = "zed_purescript_alexandrite"
+name = "zed_purescript_iris"
 version = "0.0.1"
 edition = "2021"
 publish = false
 license = "MIT"
 
 [lib]
-path = "src/purescript_alexandrite.rs"
+path = "src/purescript_iris.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
