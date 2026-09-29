@@ -48,7 +48,10 @@ if it isn't already there). Override per-project if needed:
     "iris": {
       "binary": {
         "path": "C:/path/to/iris.exe",
-        "arguments": ["--lsp-log", "debug"]
+        "arguments": ["lsp", "--stdio", "--lsp-log", "debug"],
+        "env": {
+          "IRIS_SPAGO": "node_modules\\.bin\\spago.cmd"
+        }
       },
       "settings": {
         "diagnostics": { "onOpen": false }
@@ -58,10 +61,14 @@ if it isn't already there). Override per-project if needed:
 }
 ```
 
-The `lsp` subcommand is prepended and `--stdio` appended unless `arguments` already has them, so only
-extra flags need listing. Flags (`iris lsp --help` for the full list): `--lsp-log <level>` (default
+**When `binary.path` is set, Zed launches it directly and never asks this extension for the
+command, so `arguments` must include `lsp --stdio` itself.** Without `path`, the extension prepends
+`lsp` and appends `--stdio` unless `arguments` already has them, so only extra flags need listing.
+Flags (`iris lsp --help` for the full list): `--lsp-log <level>` (default
 `info`), `--query-log <level>` and `--checking-log <level>` (default `off`). Logs go to
 `%LOCALAPPDATA%\iris-lang\iris\cache\iris.log`.
+
+If iris is unable to find your spago command, try setting the env var for IRIS_SPAGO like in the example.
 
 `lsp.iris.settings` is served to Iris as its `iris.server` configuration section; see
 [Iris's README](https://github.com/purefunctor/purescript-iris#language-server-configuration) for the
