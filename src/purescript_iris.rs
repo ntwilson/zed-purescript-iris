@@ -1,17 +1,19 @@
 use zed_extension_api::{
-    self as zed, serde_json::Value, settings::LspSettings, LanguageServerId, Result,
+    self as zed, serde_json::{self, Value}, settings::LspSettings, LanguageServerId, Result,
 };
 
-const BINARY_NAME: &str = "purescript-alexandrite";
+const BINARY_NAME: &str = "iris";
 
-/// Matches what the VS Code extension spawns: the bare binary in stdio mode, with
-/// no subcommand. `alexandrite lsp` also works, but only `--stdio` is what the
-/// published extension is tested against.
+/// Matches what the VS Code extension spawns: `iris lsp --stdio`.
+const LSP_SUBCOMMAND: &str = "lsp";
 const STDIO_ARG: &str = "--stdio";
 
-struct PurescriptAlexandriteExtension;
+/// The section Iris requests. ZED LOOKS IT UP AS ONE LITERAL KEY, NOT A DOTTED PATH.
+const CONFIG_SECTION: &str = "iris.server";
 
-impl zed::Extension for PurescriptAlexandriteExtension {
+struct PurescriptIrisExtension;
+
+impl zed::Extension for PurescriptIrisExtension {
     fn new() -> Self {
         Self
     }
@@ -32,7 +34,7 @@ impl zed::Extension for PurescriptAlexandriteExtension {
             .ok_or_else(|| {
                 format!(
                     "{BINARY_NAME} not found on PATH. Install it, or set \
-                     lsp.alexandrite.binary.path in your Zed settings."
+                     lsp.iris.binary.path in your Zed settings."
                 )
             })?;
 
@@ -41,14 +43,16 @@ impl zed::Extension for PurescriptAlexandriteExtension {
             .and_then(|binary| binary.arguments.clone())
             .unwrap_or_default();
 
-        // APPEND `--stdio`, NEVER SUBSTITUTE IT FOR THE USER'S ARGS. Setting `arguments`
-        // to pass a flag like `--diagnostics-on-open false` would otherwise drop stdio,
-        // leaving a server that never speaks the protocol.
+        // ADD `lsp` AND `--stdio`, NEVER SUBSTITUTE THEM FOR THE USER'S ARGS. Setting
+        // `arguments` to pass a flag like `--lsp-log debug` would otherwise start no server.
+        if args.first().map(String::as_str) != Some(LSP_SUBCOMMAND) {
+            args.insert(0, LSP_SUBCOMMAND.to_string());
+        }
         if !args.iter().any(|arg| arg == STDIO_ARG) {
             args.push(STDIO_ARG.to_string());
         }
 
-        // Alexandrite shells out for source discovery, so it needs a usable env;
+        // Iris shells out for source discovery, so it needs a usable env;
         // fall back to the worktree's rather than an empty one.
         let env = binary
             .and_then(|binary| binary.env)
@@ -78,9 +82,10 @@ impl zed::Extension for PurescriptAlexandriteExtension {
         Ok(
             LspSettings::for_worktree(language_server_id.as_ref(), worktree)
                 .ok()
-                .and_then(|settings| settings.settings),
+                .and_then(|settings| settings.settings)
+                .map(|settings| serde_json::json!({ CONFIG_SECTION: settings })),
         )
     }
 }
 
-zed::register_extension!(PurescriptAlexandriteExtension);
+zed::register_extension!(PurescriptIrisExtension);

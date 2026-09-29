@@ -1,10 +1,10 @@
-# zed-purescript-alexandrite
+# zed-purescript-iris
 
 > **Disclaimer:**
 >
 > This extension completely vibe-coded by AI.
 
-A Zed extension that registers [Alexandrite](https://github.com/purefunctor/purescript-alexandrite)
+A Zed extension that registers [Iris](https://github.com/purefunctor/purescript-iris)
 as a language server for PureScript.
 
 Zed has no settings-only way to add a language server
@@ -22,7 +22,7 @@ Zed rebuilds it on `zed: reload extensions`, and reinstalls on restart.
 
 ## Configure
 
-The server is named `alexandrite`. Enable it for PureScript in `settings.json` — or in a project's
+The server is named `iris`. Enable it for PureScript in `settings.json` — or in a project's
 `.zed/settings.json`:
 
 ```jsonc
@@ -30,54 +30,55 @@ The server is named `alexandrite`. Enable it for PureScript in `settings.json` �
   "languages": {
     "PureScript": {
       // LIST purescript-language-server FIRST. Zed routes a request to the first server
-      // that handles it and does not fall back, so putting pre-1.0 Alexandrite ahead of
+      // that handles it and does not fall back, so putting pre-1.0 Iris ahead of
       // it means one wedged server takes every PureScript feature down instead of
-      // degrading. Use "!purescript-language-server" to run Alexandrite alone.
-      "language_servers": ["purescript-language-server", "alexandrite"]
+      // degrading. Use "!purescript-language-server" to run Iris alone.
+      "language_servers": ["purescript-language-server", "iris"]
     }
   }
 }
 ```
 
-The binary is resolved from `PATH` (the installer's default location,
-`%LOCALAPPDATA%\Alexandrite\bin`, is already on it). Override per-project if needed:
+The binary is resolved from `PATH` (add the installer's default location, `%LOCALAPPDATA%\Iris\bin`,
+if it isn't already there). Override per-project if needed:
 
 ```jsonc
 {
   "lsp": {
-    "alexandrite": {
+    "iris": {
       "binary": {
-        "path": "C:/path/to/purescript-alexandrite.exe",
-        "arguments": ["--diagnostics-on-open", "false"]
+        "path": "C:/path/to/iris.exe",
+        "arguments": ["lsp", "--stdio", "--lsp-log", "debug"],
+        "env": {
+          "IRIS_SPAGO": "node_modules\\.bin\\spago.cmd"
+        }
+      },
+      "settings": {
+        "diagnostics": { "onOpen": false }
       }
     }
   }
 }
 ```
 
-`--stdio` is appended automatically unless `arguments` already contains it, so extra flags can be
-passed without repeating it. Alexandrite discovers sources from `spago.lock` by default; passing
-`--source-command <cmd>` also disables that integration.
+**When `binary.path` is set, Zed launches it directly and never asks this extension for the
+command, so `arguments` must include `lsp --stdio` itself.** Without `path`, the extension prepends
+`lsp` and appends `--stdio` unless `arguments` already has them, so only extra flags need listing.
+Flags (`iris lsp --help` for the full list): `--lsp-log <level>` (default
+`info`), `--query-log <level>` and `--checking-log <level>` (default `off`). Logs go to
+`%LOCALAPPDATA%\iris-lang\iris\cache\iris.log`.
 
-Flags worth knowing about (`purescript-alexandrite --help` for the full list, v0.0.18 here):
+If iris is unable to find your spago command, try setting the env var for IRIS_SPAGO like in the example.
 
-| flag | default | notes |
-| --- | --- | --- |
-| `--diagnostics-on-open <bool>` | `true` | Zed restores every `.purs` tab from the last session at once, so this is one check per restored tab before anything else is served. |
-| `--diagnostics-on-save <bool>` | `true` | |
-| `--diagnostics-on-change` | off | |
-| `--lsp-log <level>` | `info` | |
-| `--query-log <level>` / `--checking-log <level>` | `off` | |
-
-`lsp.alexandrite.settings` and `lsp.alexandrite.initialization_options` are forwarded to the server
-as workspace configuration and initialization options.
+`lsp.iris.settings` is served to Iris as its `iris.server` configuration section; see
+[Iris's README](https://github.com/purefunctor/purescript-iris#language-server-configuration) for the
+fields. Diagnostics default to on-open and on-save; Zed restores every `.purs` tab from the last
+session at once, so `onOpen` is one check per restored tab before anything else is served.
+`lsp.iris.initialization_options` is forwarded as-is.
 
 ## Known upstream problems
 
-Both are Alexandrite's, not fixable here:
+Iris's, not fixable here:
 
 - **Orphaned processes.** It doesn't exit on LSP `shutdown`/`exit`, so one process per Zed window
-  accumulates indefinitely. Check with `Get-Process purescript-alexandrite`.
-- **One shared log file.** `purescript-alexandrite --log-file` prints the path it uses, which is
-  `%TEMP%\purescript-alexandrite.log` for every instance. The first process holds it and the rest log
-  nowhere, so the log is usually stale. There's no flag to redirect it.
+  accumulates indefinitely. Check with `Get-Process iris`.
