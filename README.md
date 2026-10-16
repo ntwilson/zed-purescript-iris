@@ -39,8 +39,10 @@ The server is named `iris`. Enable it for PureScript in `settings.json` — or i
 }
 ```
 
-The binary is resolved from `PATH` (add the installer's default location, `%LOCALAPPDATA%\Iris\bin`,
-if it isn't already there). Override per-project if needed:
+The extension downloads the latest [Iris release](https://github.com/purefunctor/purescript-iris/releases)
+on first use and checks for a newer one each time Zed starts (falling back to the last download when
+offline). Releases exist for Windows x64, Linux x64 and macOS; on anything else, or to use your own
+build, set `binary.path`. Override per-project if needed:
 
 ```jsonc
 {

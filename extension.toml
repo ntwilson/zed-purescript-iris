@@ -1,6 +1,6 @@
 id = "purescript-iris"
 name = "PureScript Iris"
-version = "0.0.1"
+version = "0.0.2"
 schema_version = 1
 description = "Iris language server for PureScript."
 authors = ["nathan wilson"]
